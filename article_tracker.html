@@ -50,6 +50,17 @@ a{text-decoration:none}
 .month-option.active{background:#eef2ff;color:#4338ca;border-color:#c7d2fe;font-weight:700}
 .month-option .month-counts{font-size:10px;color:#94a3b8;margin-top:2px}
 .month-option.active .month-counts{color:#818cf8}
+/* Multi-select site */
+.site-wrap{position:relative;isolation:isolate}
+.site-trigger{display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;background:#fff;font-size:12px;color:#475569;cursor:pointer;white-space:nowrap;min-width:150px;justify-content:space-between;font-family:inherit}
+.site-trigger.active{border-color:#a5f3fc;background:#ecfeff;color:#0e7490;font-weight:600}
+.site-dropdown{position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid #e2e8f0;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:9999;min-width:260px;padding:6px 0;display:none}
+.site-dropdown.open{display:block}
+.site-search{width:100%;padding:7px 12px;border:none;border-bottom:1px solid #f1f5f9;font-size:12px;color:#1e293b;outline:none;font-family:inherit}
+.site-list{max-height:280px;overflow-y:auto}
+.site-option{display:flex;flex-direction:row;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;font-size:13px;color:#475569;user-select:none;width:100%}
+.site-option:hover{background:#f1f5f9}
+.site-option input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#0891b2;flex-shrink:0}
 /* Multi-select type */
 .type-wrap{position:relative;isolation:isolate}
 .type-trigger{display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;background:#fff;font-size:12px;color:#475569;cursor:pointer;white-space:nowrap;min-width:150px;justify-content:space-between;font-family:inherit}
@@ -122,7 +133,16 @@ a{text-decoration:none}
 <!-- Filters -->
 <div class="filters">
   <input type="text" id="search" placeholder="Search articles or sites" oninput="render()" style="font-size:13px"/>
-  <select id="site-sel" onchange="render()" style="font-size:12px;font-weight:500"></select>
+  <div class="site-wrap" id="site-wrap">
+    <button class="site-trigger" id="site-trigger" onclick="toggleSiteDropdown(event)">
+      <span id="site-trigger-label">All Sites</span>
+      <span style="font-size:10px;color:#94a3b8;margin-left:4px">&#9660;</span>
+    </button>
+    <div class="site-dropdown" id="site-dropdown">
+      <input class="site-search" id="site-search-input" type="text" placeholder="Search sites..." oninput="filterSiteOptions()"/>
+      <div class="site-list" id="site-list"></div>
+    </div>
+  </div>
   <div class="type-wrap" id="type-wrap">
     <button class="type-trigger" id="type-trigger" onclick="toggleTypeDropdown(event)">
       <span id="type-trigger-label">Content Type</span>
@@ -166,7 +186,7 @@ const LEGEND=[{type:"TC",desc:"Topic Center - group of related articles built ar
 // Get current month name
 const NOW=new Date();
 const CUR_MONTH=MONTHS[NOW.getMonth()]||"January";
-let state={tab:"added",month:CUR_MONTH,site:"All",types:new Set(),q:"",groupByType:false,liveOnly:false};
+let state={tab:"added",month:CUR_MONTH,sites:new Set(),types:new Set(),q:"",groupByType:false,liveOnly:false};
 
 // Legend
 (()=>{const lb=document.getElementById("legend-body");LEGEND.forEach(({type,desc})=>{const c=tc(type);lb.innerHTML+=`<div class="legend-row"><span class="badge" style="background:${c.bg};color:${c.text};border-color:${c.border};flex-shrink:0">${type}</span><span class="legend-desc">${desc}</span></div>`;});})();
@@ -218,7 +238,8 @@ function buildTypeDropdown(availTypes,countMap){
   const allCb=document.createElement("input");allCb.type="checkbox";allCb.checked=state.types.size===0;
   const allSpan=document.createElement("span");allSpan.textContent="All Types";allSpan.style.fontWeight="600";
   allDiv.style.cssText="display:flex;flex-direction:row;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;width:100%";
-  allDiv.append(allCb,allSpan);
+  allCb.style.cssText="flex-shrink:0;width:15px;height:15px;cursor:pointer;accent-color:#6366f1;margin-left:auto";
+  allDiv.append(allSpan,allCb);
   allDiv.onclick=()=>{state.types=new Set();updateTypeTrigger();render();};
   dd.appendChild(allDiv);
   const div=document.createElement("div");div.style.cssText="height:1px;background:#f1f5f9;margin:4px 0";dd.appendChild(div);
@@ -231,8 +252,9 @@ function buildTypeDropdown(availTypes,countMap){
     const badge=document.createElement("span");badge.className="badge";
     badge.style.cssText=`background:${c.bg};color:${c.text};border-color:${c.border}`;badge.textContent=type;
     const pill=document.createElement("span");pill.className="type-count-pill";pill.textContent=countMap[type]||0;
-    d.style.cssText="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;user-select:none";
-    d.append(cb,badge,pill);
+    d.style.cssText="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;user-select:none;width:100%";
+    cb.style.cssText="flex-shrink:0;width:15px;height:15px;cursor:pointer;accent-color:#6366f1;margin-left:auto";
+    d.append(badge,pill,cb);
     d.onclick=()=>{cb.checked=!cb.checked;if(cb.checked)state.types.add(type);else state.types.delete(type);updateTypeTrigger();render();};
     dd.appendChild(d);
   });
@@ -292,7 +314,7 @@ function buildGrouped(rows,isRemoved){
 // Actions
 function setLiveOnly(v){state.liveOnly=v;render();}
 function toggleGroup(){state.groupByType=!state.groupByType;render();}
-function clearAll(){state.q="";state.site="All";state.types=new Set();state.liveOnly=false;document.getElementById("search").value="";document.getElementById("site-sel").value="All";updateTypeTrigger();render();}
+function clearAll(){state.q="";state.sites=new Set();state.types=new Set();state.liveOnly=false;document.getElementById("search").value="";document.getElementById("site-search-input").value="";updateSiteTrigger();updateTypeTrigger();buildSiteList("");render();}
 function clickStat(w){
   if(w==="added"){state.tab="added";state.liveOnly=false;}
   else if(w==="refreshed"){state.tab="refreshed";state.liveOnly=false;}
@@ -344,7 +366,7 @@ function render(){
   buildTypeDropdown(availTypes,countMap);
 
   // Clear btn
-  document.getElementById("clear-btn").style.display=(state.q||state.site!=="All"||state.types.size>0||state.liveOnly)?"":"none";
+  document.getElementById("clear-btn").style.display=(state.q||state.sites.size>0||state.types.size>0||state.liveOnly)?"":"none";
 
   // Live banner
   document.getElementById("live-banner").className="live-banner"+(state.liveOnly?" shown":"");
