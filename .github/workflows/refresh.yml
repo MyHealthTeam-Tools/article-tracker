@@ -1,0 +1,33 @@
+name: Refresh Article Tracker
+
+on:
+  schedule:
+    - cron: '0 14 * * *'  # Every day at 6am PST (2pm UTC)
+  workflow_dispatch:        # Also allows manual trigger from GitHub UI
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate tracker
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+          OUTPUT_PATH: article_tracker.html
+        run: python generate.py
+
+      - name: Commit and push updated tracker
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add article_tracker.html
+          git diff --staged --quiet || git commit -m "Refresh article tracker - $(date +'%B %d, %Y')"
+          git push
