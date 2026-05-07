@@ -228,7 +228,7 @@ a{text-decoration:none}
 .tab.active{background:#fff;color:#1e293b;box-shadow:0 1px 3px rgba(0,0,0,.1)}
 .tab-count{font-size:11px;font-weight:700;padding:1px 6px;border-radius:10px;background:#e2e8f0;color:#94a3b8}
 .tab.active .tab-count{background:var(--tab-bg);color:var(--tab-c)}
-.filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-start}
+.filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;position:relative;z-index:10}
 .filters input{flex:1 1 180px;min-width:140px}
 .legend-btn{width:100%;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;background:none;border:none}
 #legend-body{display:none;border-top:1px solid #f1f5f9;padding:10px 14px;flex-direction:column;gap:7px}
@@ -252,10 +252,10 @@ a{text-decoration:none}
 .month-option .month-counts{font-size:10px;color:#94a3b8;margin-top:2px}
 .month-option.active .month-counts{color:#818cf8}
 /* Multi-select type */
-.type-wrap{position:relative}
+.type-wrap{position:relative;isolation:isolate}
 .type-trigger{display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;background:#fff;font-size:12px;color:#475569;cursor:pointer;white-space:nowrap;min-width:150px;justify-content:space-between;font-family:inherit}
 .type-trigger.active{border-color:#c7d2fe;background:#eef2ff;color:#4338ca;font-weight:600}
-.type-dropdown{position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid #e2e8f0;border-radius:9px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:200;min-width:230px;padding:6px 0;display:none;max-height:320px;overflow-y:auto}
+.type-dropdown{position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid #e2e8f0;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:9999;min-width:230px;padding:6px 0;display:none;max-height:320px;overflow-y:auto}
 .type-dropdown.open{display:block}
 .type-option{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-size:13px;color:#475569;user-select:none}
 .type-option:hover{background:#f8fafc}
